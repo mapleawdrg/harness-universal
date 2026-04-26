@@ -1,0 +1,78 @@
+너의 단일 임무: `wiki/hot.md`을 현재 프로젝트 상태 기반으로 완전히 재작성한다.
+
+## 필수 입력 소스 (Read 도구로 반드시 읽기)
+
+1. `.harness/decisions-log.md` — 파일 상단 100줄 (최근 DEC entries, 최신순)
+2. `wiki/log.md` — 파일 상단 80줄 (최근 ING entries, 최신순)
+3. `.harness/sprint-contract.md` — 현재 스프린트 태스크/AC/상태
+4. `wiki/hot.md` — 직전 상태 (Phase 진행 맥락 파악용)
+
+## 출력 요구사항
+
+`wiki/hot.md` 전체를 Write 도구로 덮어쓰기. 다음 포맷 엄수:
+
+```markdown
+---
+title: "Hot Cache — 최근 세션 컨텍스트"
+updated: {현재 UTC ISO 타임스탬프 — date -u +%Y-%m-%dT%H:%M:%SZ 형식}
+---
+
+# Hot Cache
+
+> 매 commit 시 자동 재작성 (post-commit PART B-2). 다음 세션이 cold-start 없이 즉시 맥락을 파악하기 위한 1-페이지 요약.
+
+## 현재 Phase 상태 ({YYYY-MM-DD})
+
+**{핵심 현황 한 줄 — 예: "Phase P4.5 Sprint 1 @dev 착수 대기"}**
+
+| 스프린트 | 상태 | 비고 |
+|---|---|---|
+... (최근 2-4개 스프린트. 상태: ✅ PASS / 🔄 진행 중 / 🟡 NEEDS_WORK)
+
+## 다음 액션
+
+1. {가장 우선, 누가 무엇을}
+2. {그다음}
+3. {검증/관찰 액션}
+
+## 핵심 결정 (최근 세션)
+
+- **DEC-NNNN** ({commit hash 또는 pending}): {한 줄 요약}
+- **DEC-NNNN**: {한 줄 요약}
+(최근 3-5건)
+
+## 최근 Wiki Sync
+
+- **ING-NNNN**: {한 줄 요약}
+(최근 2-3건)
+
+## 참조
+
+- DEC 상세: `.harness/decisions-log.md`
+- Sprint: `.harness/sprint-contract.md`
+- Wiki: `wiki/pages/*.md`
+- Schema: `CLAUDE.md#Logs & Records`
+```
+
+## 작성 규칙
+
+- **500-900자 내외** (부연 금지, 팩트 위주)
+- **최신성 우선**: 일주일 이상 된 사건은 "참조" 섹션으로 demote
+- **commit hash는 7자 short** (예: `6e13f44`) 또는 `pending`
+- **Phase 상태 추론**: sprint-contract.md + 최근 DEC entries 교차 확인
+- **다음 액션 추론**: sprint-contract.md의 Handoff Note + 최근 DEC의 미완료 항목
+
+## CRITICAL: 기존 last-commit 마커 보존
+
+재작성 전에 현재 `wiki/hot.md` 마지막 줄 확인:
+```
+<!-- last-commit: {hash} at {ISO} -->
+```
+
+이 줄을 **재작성된 hot.md 맨 끝에 그대로 복사**한다 (post-commit PART C가 작성한 floor 마커 — B-2가 실패/미실행시 forensic 추적용). 없으면 생략 가능하나 있으면 반드시 보존.
+
+## 완료 보고
+
+Write 완료 후 1-2줄로 "어떤 내용 반영했는지" 요약 (예: "DEC-0003, ING-0004 반영. Phase P4.5 진행 중 → Sprint 1 @dev 착수 대기로 갱신").
+
+이 작업 외 다른 파일은 수정하지 마라. /wiki ingest는 이미 완료된 상태.

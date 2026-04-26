@@ -1,0 +1,66 @@
+{
+  "_comment": "SubagentStop output-guard가 읽는 에이전트→기대 산출물 매핑. 새 에이전트 추가 시 case 문 수정 대신 이 파일만 갱신.",
+  "_handoff_convention": "{PHASE}는 호출 시 첫 줄 'Phase: P{N}' 로 주입. 파일명은 *-p{N}.md 패턴. PHASE-agnostic 에이전트는 phase_scoped=false.",
+
+  "agents": {
+    "product-designer": {
+      "expected_output": "product-design-p{PHASE}.md",
+      "phase_scoped": true,
+      "next": "product-reviewer",
+      "role": "generator"
+    },
+    "product-reviewer": {
+      "expected_output": "product-review-p{PHASE}.md",
+      "phase_scoped": true,
+      "next_on_pass": "architect",
+      "next_on_needs_work": "product-designer",
+      "role": "evaluator"
+    },
+    "architect": {
+      "expected_output": "architect-design-p{PHASE}.md",
+      "phase_scoped": true,
+      "next": "architect-reviewer",
+      "role": "generator"
+    },
+    "architect-reviewer": {
+      "expected_output": "architect-review-p{PHASE}.md",
+      "phase_scoped": true,
+      "next_on_pass": "planner",
+      "next_on_needs_work": "architect",
+      "role": "evaluator"
+    },
+    "planner": {
+      "expected_output": "sprint-contract-p{PHASE}.md",
+      "phase_scoped": true,
+      "next": "plan-reviewer",
+      "role": "generator"
+    },
+    "plan-reviewer": {
+      "expected_output": "plan-review-p{PHASE}.md",
+      "phase_scoped": true,
+      "next_on_pass": "dev",
+      "next_on_needs_work": "planner",
+      "role": "evaluator"
+    },
+    "dev": {
+      "expected_output": "dev-report-p{PHASE}.md",
+      "phase_scoped": true,
+      "next": "qa",
+      "escalate_after_n_failures": "explain",
+      "role": "generator"
+    },
+    "qa": {
+      "expected_output": "qa-report-p{PHASE}.md",
+      "phase_scoped": true,
+      "next_on_pass": "(complete)",
+      "next_on_needs_work": "dev",
+      "role": "evaluator"
+    },
+    "explain": {
+      "expected_output": "error-log.md",
+      "phase_scoped": false,
+      "role": "cross-cutting",
+      "routes_to": ["dev", "planner", "architect"]
+    }
+  }
+}

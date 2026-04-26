@@ -1,0 +1,30 @@
+# Runtime harness artifacts (per-project, not tracked)
+.harness/*
+!.harness/.gitkeep
+
+# Wiki generated state
+wiki/.cache/
+wiki/sources.log
+wiki/sources.json
+
+# Project-local Claude Code overrides
+.claude/settings.local.json
+.claude/.local/
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+*.iml
+
+# Python (skill scripts may use)
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
