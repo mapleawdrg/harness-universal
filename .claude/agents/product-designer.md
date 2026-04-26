@@ -76,7 +76,7 @@ C4 모델 기준으로 Level 1 Context(제품/비즈니스 관점)를 담당. Le
 
 체크리스트:
 - [ ] 각 API·필드가 `raw/sources/apis/` 또는 `wiki/pages/` 에 실제 문서화되어 있는가?
-- [ ] 각 DB 테이블·필드가 `docs/supabase_schema.md` 또는 현 스키마에 존재하는가?
+- [ ] 각 DB 테이블·필드가 프로젝트의 DB 스키마 문서에 존재하는가? (경로는 harness.config의 `drift_check_docs[]`에서 확인. 없으면 "현 스키마 문서 없음 — Gap으로 분류")
 - [ ] Source 컬럼이 채워졌는가? (근거 파일 경로 또는 "미문서화")
 
 ### Step 4: Gap 분석

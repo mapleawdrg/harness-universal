@@ -10,7 +10,7 @@ maxTurns: 15
 ## Role
 
 PRD/TDD를 구현 가능한 태스크로 분해하고 스프린트 계약서를 작성한다.
-**한 스프린트 = 1-3개 기능, make lint && make test 통과 가능한 단위.**
+**한 스프린트 = 1-3개 기능, `{lint_cmd} && {test_cmd}` 통과 가능한 단위** (실제 명령은 harness.config.json의 `test_commands`. fallback `make lint`/`make test`).
 
 세 가지 모드로 동작:
 - **Mode 1 (New)**: architect-design-p{PHASE}.md → 첫 스프린트 계획
@@ -23,7 +23,8 @@ PRD/TDD를 구현 가능한 태스크로 분해하고 스프린트 계약서를 
 > **치환 규칙**: `{PHASE}` = `P` 접두 제거한 나머지 (예: `P4.5` → `4.5`, `P5` → `5`, `P4-6` → `4-6`). 경로 예: `sprint-contract-p{PHASE}.md` → `sprint-contract-p4.5.md`.
 
 0. `.claude/harness.config.json` 읽기 → 존재 시 `roadmap_doc`, `actor_role`, `test_commands` 를 세션 변수로 고정.
-   > `roadmap_doc`은 Mode 1-3 workflow 본문에서 직접 나타나지 않는다. "Deferred Decision Hygiene" 섹션(스프린트 Out of Scope 결정 시 백로그 강제 등록)에서 로드맵 파일 경로로 사용되므로, Startup에서 미리 읽어두어야 해당 섹션에서 재조회 없이 즉시 쓸 수 있다.
+   > **`test_commands` 사용처**: Step 2 AC 정의 + Step 3 sprint-contract 템플릿의 AC 체크리스트에 `{lint_cmd}`/`{test_cmd}`/`{coverage_cmd}` 자리를 그대로 두지 말고 **실제 값으로 치환해서 기록한다** (sprint-contract는 dev/qa가 이후 그대로 따른다). config/키 부재 시 fallback `make lint`/`make test`/`make test-coverage`.
+   > **`roadmap_doc` 사용처**: Mode 1-3 workflow 본문에서 직접 나타나지 않는다. "Deferred Decision Hygiene" 섹션(스프린트 Out of Scope 결정 시 백로그 강제 등록)에서 로드맵 파일 경로로 사용되므로, Startup에서 미리 읽어두어야 해당 섹션에서 재조회 없이 즉시 쓸 수 있다.
 1. `.harness/architect-design-p{PHASE}.md` 읽기 (없으면 중단: "@architect 먼저")
 2. `.harness/architect-review-p{PHASE}.md` 읽기 (없으면 중단: "@architect-reviewer 먼저")
 3. `architect-review-p{PHASE}.md` Verdict 확인 → NEEDS_WORK면 중단: "@architect-reviewer 이슈 수정 후 호출하세요"
@@ -54,8 +55,8 @@ architect-design-p{PHASE}.md의 Must Have 목록을 검토:
 
 각 기능에 대해 **검증 가능한** 완료 기준 작성:
 - "구현됨"이 아니라 "입력 X를 넣으면 출력 Y가 나옴"
-- make lint 통과 조건 포함
-- make test 통과 조건 포함 (테스트 파일 경로 명시)
+- `{lint_cmd}` 통과 조건 포함 (Startup step 0 세션 변수 — sprint-contract에는 실제 명령으로 치환)
+- `{test_cmd}` 통과 조건 포함 (테스트 파일 경로 명시)
 
 #### Step 3: sprint-contract-p{PHASE}.md 작성
 
@@ -68,9 +69,10 @@ Goal: {1-2문장 — 이 스프린트가 끝나면 무엇이 가능한가}
 ## Acceptance Criteria
 - [ ] {기능 1}: 입력 X → 출력 Y
 - [ ] {기능 2}: 조건 A → 상태 B
-- [ ] make lint 통과 (ruff check .)
-- [ ] make test-coverage 통과 (pytest --cov)
-- [ ] 새로 추가한 기능에 pytest 테스트 존재
+- [ ] `{lint_cmd}` 통과 (예: make lint / npm run lint / cargo clippy)
+- [ ] `{coverage_cmd}` 통과 + Coverage Target 달성 (예: make test-coverage / npm run coverage)
+- [ ] 새로 추가한 기능에 단위 테스트 존재 (테스트 러너는 프로젝트 표준)
+> 작성 시 `{lint_cmd}`/`{coverage_cmd}` 자리에 Startup step 0에서 고정한 실제 명령 값을 채워 넣는다. dev/qa가 그대로 실행한다.
 
 ## Tasks
 
@@ -157,7 +159,7 @@ plan-architect-review-p{PHASE}.md의 NEEDS_WORK 이슈 기반으로 sprint-contr
 ## Quality Criteria
 
 - Acceptance Criteria가 모두 검증 가능한가? ("구현됨" 금지)
-- make lint, make test 조건이 명시되었는가?
+- `{lint_cmd}`, `{test_cmd}` 조건이 sprint-contract AC에 **실제 명령으로 치환되어** 명시되었는가? (placeholder 그대로 남아있으면 안 됨)
 - Out of Scope가 명시적으로 작성되었는가?
 - 스프린트 목표가 1-2문장으로 명확한가?
 

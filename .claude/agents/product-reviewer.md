@@ -71,7 +71,7 @@ BDD 포맷·Actor·Given/When/Then·Happy+Edge 구성 점검.
 - [ ] Matrix의 각 행이 시나리오의 Given/When/Then 중 하나에 매핑되는가?
 - [ ] 언급된 API 엔드포인트가 `raw/sources/apis/` 또는 `wiki/pages/*-api*.md`에 실재하는가?
 - [ ] 언급된 필드명이 해당 API 문서에 실재하는가? (오타·환각 체크 — Grep으로 검증)
-- [ ] 언급된 DB 테이블이 `docs/supabase_schema.md` 또는 기존 스키마에 있는가?
+- [ ] 언급된 DB 테이블이 프로젝트의 DB 스키마 문서에 있는가? (경로는 harness.config의 `drift_check_docs[]`에서 찾아 grep으로 검증)
 - [ ] 필드 타입·제약이 시나리오의 assertion과 충돌하지 않는가?
 - [ ] Source 컬럼이 모든 행에 채워져 있는가?
 

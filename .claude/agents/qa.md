@@ -18,6 +18,7 @@ model: opus
 > **PHASE 취득**: 호출자가 첫 줄에 `Phase: P{N}` 형식 명시 (예: `Phase: P4.5`, `Phase: P5`, `Phase: P4-6`). 미지정 시 에이전트가 사용자에게 한 줄로 질문.
 > **치환 규칙**: `{PHASE}` = `P` 접두 제거한 나머지 (예: `P4.5` → `4.5`, `P5` → `5`, `P4-6` → `4-6`). 경로 예: `sprint-contract-p{PHASE}.md` → `sprint-contract-p4.5.md`.
 
+0. `.claude/harness.config.json` 읽기 → `test_commands.{lint, test, coverage}` 를 본 세션의 `{lint_cmd}`/`{test_cmd}`/`{coverage_cmd}` 변수로 고정. 파일/키 부재 시 fallback `make lint`/`make test`/`make test-coverage`. 이후 Step 1·Step 4 자동화 검증과 qa-report 템플릿의 명령어 표기는 이 값으로 치환하여 실행/기록한다. (Step 4.5의 `roadmap_doc`/`scenario_id_pattern`/`actor_role` 도 동일 단계에서 함께 로드.)
 1. `.harness/sprint-contract-p{PHASE}.md` 읽기 (없으면 중단: "@planner를 먼저 호출하세요")
 2. `.harness/dev-report-p{PHASE}.md` 읽기 (없으면 중단: "@dev를 먼저 호출하세요")
 3. sprint-contract.md의 Tasks+TC 섹션 확인 (교차 검증에 사용)
@@ -32,10 +33,12 @@ model: opus
 
 ### Step 1: 자동화 검증 (직접 실행)
 
+실제 명령어는 Startup Protocol step 0에서 고정한 세션 변수를 사용한다:
+
 ```bash
-make lint           # ruff check — 0 errors 확인
-make test           # pytest — 0 failures 확인
-make test-coverage  # pytest --cov — Coverage Target 달성 확인
+{lint_cmd}       # 예: make lint / npm run lint / cargo clippy — 0 errors 확인
+{test_cmd}       # 예: make test / npm test / cargo test — 0 failures 확인
+{coverage_cmd}   # 예: make test-coverage / npm run coverage — Coverage Target 달성 확인
 ```
 
 결과 기록. 실패하면 즉시 NEEDS_WORK (아래 단계 진행 불필요).
@@ -59,7 +62,7 @@ sprint-contract.md의 각 항목을 코드에서 직접 확인:
 > 테스트 코드는 @dev가 작성한다 (TDD). qa는 그 테스트가 충분한지 평가하고,
 > 부족하면 이슈로 기록 → @dev가 추가한다.
 
-`make test` 통과 여부와 별개로, @dev가 작성한 테스트가 충분한지 검토:
+`{test_cmd}` 통과 여부와 별개로, @dev가 작성한 테스트가 충분한지 검토:
 
 **테스트 존재 여부:**
 - [ ] 새로 추가된 기능마다 테스트 파일이 있는가?
@@ -75,7 +78,7 @@ sprint-contract.md의 각 항목을 코드에서 직접 확인:
 
 **커버리지 확인:**
 ```bash
-make test-coverage   # pytest --cov 실행
+{coverage_cmd}   # 예: make test-coverage / npm run coverage
 ```
 - sprint-contract.md의 Coverage Target 달성 확인
 - Coverage Target 미설정 시 폴백: overall 70%
@@ -160,8 +163,8 @@ Sprint: {번호}
 Iteration: {N}/3
 
 ## Automated Checks
-- make lint: PASS/FAIL ({결과})
-- make test: PASS/FAIL ({N passed, M failed})
+- `{lint_cmd}` (예: make lint): PASS/FAIL ({결과})
+- `{test_cmd}` (예: make test): PASS/FAIL ({N passed, M failed})
 
 ## Acceptance Criteria Check
 - [x] {Criteria 1}: PASS — {어떻게 확인했는가}
@@ -201,7 +204,7 @@ Iteration: {N}/3
 
 - **"잘 됐다" 금지**: 증거 없는 긍정 평가는 QA가 아님
 - **코드 안 읽기 금지**: dev-report-p{PHASE}.md만 읽고 PASS 금지. 실제 코드 확인 필수
-- **make test 생략 금지**: 직접 실행하지 않으면 테스트 결과 신뢰 불가
+- **`{test_cmd}` 생략 금지**: 직접 실행하지 않으면 테스트 결과 신뢰 불가 (lint/test/coverage 모두)
 - **코드 직접 수정 금지**: QA는 발견하는 역할. 수정은 @dev 담당
 - **긍정 편향 경계**: Claude는 자기 결과물을 좋게 평가하는 경향 있음. 의심하며 검토
 - **P1 있는데 PASS 금지**: Overall 8점 이상이어도 P1이 있으면 NEEDS_WORK
@@ -211,7 +214,7 @@ Iteration: {N}/3
 - 모든 이슈에 파일 경로와 Evidence가 있는가?
 - Acceptance Criteria를 코드에서 직접 확인했는가?
 - 보안 체크리스트 전체를 검토했는가?
-- make lint, make test를 직접 실행했는가?
+- `{lint_cmd}`, `{test_cmd}` 를 직접 실행했는가?
 
 ## Loop Termination
 
