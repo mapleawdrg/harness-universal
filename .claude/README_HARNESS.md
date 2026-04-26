@@ -116,6 +116,7 @@ echo "# Product Vision" > .harness/product-vision.md
 ## 현재 v1 한계 (후속 릴리스 예정)
 
 - **에이전트 프롬프트 템플릿 엔진 없음**: 현재 `{{var}}` 치환이 아닌 수동 치환. 차기: Jinja2 or 단순 `{{KEY}}` 프리프로세서.
+- **`agents-manifest.json`의 `escalate_after_n_failures` 필드는 현재 hook 라우팅 미사용**: 문서화 메타로만 존재 (`_field_semantics` 명시). 실제 트리거는 `dev.md` Step 4a / `qa.md` Step 6a에 박힘. 차기: hook이 이 필드 읽고 자동 라우팅.
 - **중복 체크리스트**: qa/product-reviewer/architect에 review-rubric, scenario-matrix, security-checklist 중복. 차기: `.claude/agents/_shared/*.md` 추출 후 에이전트는 참조만.
 - **user-facing transparency**: 에이전트가 "현재 step / 남은 step"을 Stop 훅에 노출하지 않음. 차기: session-summary.sh에 "다음 제안 에이전트" 힌트 추가.
 - **sprint-contract 테스트 스냅샷 필드 미강제**: dev-report 자유기술. 차기: `test_snapshot: {count, coverage, hash}` schema 강제.

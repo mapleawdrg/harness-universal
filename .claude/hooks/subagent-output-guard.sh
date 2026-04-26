@@ -57,7 +57,7 @@ extract_phase_from_transcript() {
     local transcript="$1"
     [ -z "$transcript" ] || [ ! -f "$transcript" ] && return 1
     # JSONL 첫 user message → content → 'Phase: P{N}' regex
-    python3 - "$transcript" <<'PY' 2>/dev/null
+    python3 -u - "$transcript" <<'PY' 2>/dev/null
 import sys, json, re
 path = sys.argv[1]
 try:
@@ -97,7 +97,8 @@ resolve_expected_from_manifest() {
     local agent="$1"
     local phase="$2"
     [ ! -f "$MANIFEST" ] && return 1
-    python3 - "$agent" "$phase" "$MANIFEST" <<'PY' 2>/dev/null || return 1
+    # -u: unbuffered stdout — set -e 환경에서 partial output race 방지
+    python3 -u - "$agent" "$phase" "$MANIFEST" <<'PY' 2>/dev/null || return 1
 import json, sys
 agent, phase, manifest_path = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(manifest_path) as f:
@@ -151,14 +152,21 @@ if [[ "$EXPECTED_RAW" == NO_PHASE_GLOB:* ]]; then
     # PHASE 미확인 — phase-scoped artifact 인데 phase 가 없음.
     # silent pass 금지: 명시적 경고 후 임의 매칭 fallback 도 시도(안전망).
     PATTERN="${EXPECTED_RAW#NO_PHASE_GLOB:}"
-    warn_box "PHASE 메타데이터를 추출하지 못했습니다.
+    # glob 매치된 파일 중 가장 최신 것을 노출 (사용자가 phase mismatch 즉시 인지)
+    LATEST_MATCH="$(compgen -G "${HARNESS_DIR}/${PATTERN}" 2>/dev/null | xargs -r ls -1t 2>/dev/null | head -1 || echo "")"
+    if [ -n "$LATEST_MATCH" ]; then
+        warn_box "PHASE 메타데이터를 추출하지 못했습니다.
 원인: agent 호출 첫 메시지에 'Phase: P{N}' 라인이 없거나 transcript 파일을 읽지 못함.
 영향: phase-scoped 산출물(${PATTERN})을 PHASE 단위로 검증할 수 없습니다.
-임시 매칭: ${HARNESS_DIR}/${PATTERN} 의 임의 일치 파일로 fallback 합니다.
+임시 매칭: ${LATEST_MATCH} (가장 최신 파일).
+⚠️  이 파일이 현재 작업의 PHASE와 일치하는지 확인하세요. 다른 PHASE 산출물일 수 있습니다.
 권장 조치: agent 호출 시 첫 줄에 'Phase: P{N}' 명시 또는 HARNESS_PHASE env 설정."
-    if ! compgen -G "${HARNESS_DIR}/${PATTERN}" > /dev/null 2>&1; then
-        warn_box "기대 출력 파일 없음 (PHASE 미확인 + glob 매치 0건): .harness/${PATTERN}
-State Handoff 미완료 가능성. 사용자 확인 필요."
+    else
+        warn_box "PHASE 메타데이터를 추출하지 못했습니다 + 매칭 파일 0건.
+원인: agent 호출 첫 메시지에 'Phase: P{N}' 라인이 없거나 transcript 파일을 읽지 못함.
+기대 출력: .harness/${PATTERN}
+State Handoff 미완료 가능성. 사용자 확인 필요.
+권장 조치: agent 호출 시 첫 줄에 'Phase: P{N}' 명시 또는 HARNESS_PHASE env 설정."
     fi
 elif [ ! -f "${HARNESS_DIR}/${EXPECTED_RAW}" ]; then
     warn_box "기대 출력 파일 없음: .harness/${EXPECTED_RAW}
