@@ -154,8 +154,16 @@ echo "# Product Vision" > .harness/product-vision.md
 
 **Q. `subagent-output-guard.sh` 가 경고를 안 띄운다**
 - manifest 파일 존재 확인: `.claude/agents-manifest.json`
-- PHASE 전달 확인: 호출 시 첫 줄 `Phase: P{N}`
-- HARNESS_PHASE env var로 override 가능
+- PHASE 전달 채널 (우선순위 순):
+  1. `HARNESS_PHASE` env (수동 override, 최우선)
+  2. agent 호출 첫 메시지의 `Phase: P{N}` 라인 — hook이 SubagentStop payload의 `agent_transcript_path` JSONL을 읽어 자동 추출
+  3. 둘 다 없으면 명시적 경고 + glob fallback (silent pass 아님)
+- payload 필드: 공식 스키마는 `agent_type` (구버전 `agent_name`도 호환). 매니페스트 키와 매칭 필요.
+
+**Q. PHASE 추출 실패 경고가 매번 뜬다**
+- 원인: 사용자가 agent 호출 시 첫 줄에 `Phase: P{N}` 명시 안 함
+- 해결: agent 호출 메시지 템플릿에 첫 줄 `Phase: P{N}` 강제 (예: `@planner` 호출 시 항상 `Phase: P5\n실제 요청...`)
+- 또는 세션 시작 시 `export HARNESS_PHASE=P5`
 
 **Q. plan-reviewer Step 4.5가 모든 prop을 HIGH로 올린다**
 - `harness.config.json`의 `drift_check_docs`에 존재하지 않는 파일이 있는지 확인
