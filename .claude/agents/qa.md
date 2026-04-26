@@ -144,6 +144,28 @@ sprint-contract의 AC가 "구현 사실"(함수 존재, DB INSERT, 모듈 주입
 
 **Confidence threshold**: 80% 이상 확신할 때만 이슈로 기록. 불확실하면 "확인 필요" 표시.
 
+#### Step 6a: @explain 에스컬레이션 (Layer 모호 시)
+
+P1 이슈가 발견됐는데 **"코딩 버그(Layer 1)인지 / 계획 오류(Layer 2)인지 / 설계 결함(Layer 3)인지" 판단이 모호**하면, qa-report 작성 후 `@dev` 대신 `@explain`을 먼저 호출한다.
+
+호출 메시지 예:
+> "@explain — Layer 분류 요청. P1 이슈: {요약}. 의심 레이어: {코딩 / 계획 / 설계}. qa-report-p{PHASE}.md 참조."
+
+@explain이 Layer를 판정하면:
+- Layer 1 → @dev 수정 (기본 경로)
+- Layer 2 → @planner 재계획
+- Layer 3 → @architect 재정의
+
+**언제 @dev 직접 호출 (@explain 우회)**:
+- AC 미충족이 코드만 봐도 명확히 구현 누락/버그 — Layer 1로 단정 가능
+- lint/test 실패가 단순 import/타입/assertion 오류 — Layer 1
+- 같은 dev/qa 사이클에서 동일 이슈가 처음 등장 — 일단 @dev에게 1회 기회
+
+**언제 @explain 필수**:
+- P1 이슈가 sprint-contract AC나 architect-design 가정과 모순
+- qa가 이전 사이클에서 같은 이슈를 이미 한 번 지적했는데 다시 등장 (Iteration 2/3)
+- "필요한 모듈/스키마/API가 존재하지 않음" 형태의 결손 (계획 누락 시사)
+
 ### Step 7: Quality Score 계산
 
 | 항목 | 점수 | 기준 |

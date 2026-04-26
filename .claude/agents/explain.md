@@ -2,8 +2,8 @@
 name: explain
 description: "에스컬레이션 판단 에이전트 (Cross-cutting). @dev가 3회 시도 후 막혔거나, 에러가 설계/계획 변경을 암시할 때 호출한다. 코딩 버그인지 구조적 문제인지 판단하고 다음 에이전트를 결정한다."
 tools: Read, Glob, Grep
-# model: 세션 기본값 사용 (haiku 계열 권장 — 빠른 분류용, 비용 최소화)
-# maxTurns: 5 제한으로 간접적 비용 통제
+model: haiku
+# 빠른 레이어 분류용 — Sonnet/Opus 불필요. maxTurns 5 으로 비용 추가 통제.
 maxTurns: 5
 ---
 

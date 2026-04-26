@@ -177,8 +177,21 @@ planner ↔ plan-reviewer 루프는 최대 3회.
 - 없으면 N = 1
 - 있으면 N = 이전값 + 1
 
-N = 3이고 결과가 NEEDS_WORK이면 수정 요청 대신:
-> "3회 검토를 완료했으나 이슈가 남아있습니다. 사용자 판단이 필요합니다."
+N = 3이고 결과가 NEEDS_WORK이면 수정 요청 대신 **이슈 원인을 분류해서 안내**:
+
+1. **계획 결함 (planner 영역)**: AC 표현 부족, TC 유형 누락, 커버리지 목표 부적절
+   > "3회 검토를 완료했으나 이슈가 남아있습니다. 사용자 판단이 필요합니다."
+
+2. **설계 결함 시사 (architect 영역으로 회귀)**: 아래 신호 중 하나 이상
+   - 동일 AC 모호성이 3 iteration 동안 해소 안 됨 (planner가 architect-design을 "검증 가능한 명령"으로 풀어내지 못함)
+   - architect-design의 Must Have/User Scenario 자체가 모순/불완전 (planner가 합리적 sprint-contract를 도출 불가)
+   - Step 4.5 침묵 충돌이 sprint-contract 수정만으로 해소 안 됨 (drift_check_docs SSOT 자체가 잘못됨)
+
+   이 경우:
+   > "3회 검토 후에도 이슈가 남았습니다. **계획 단계가 아니라 설계 단계 결함이 의심됩니다**: {구체 신호}. @architect를 호출해서 architect-design-p{PHASE}.md를 재검토하세요. (planner 재호출은 architect-review PASS 이후)"
+
+3. **사용자 판단 필요 (분류 자체가 모호)**:
+   > "3회 검토 후에도 이슈가 남았습니다. 계획 결함인지 설계 결함인지 판단이 모호합니다. 사용자 판단을 요청합니다 — 또는 @explain을 호출해서 레이어 분류를 받으세요."
 
 ## State Handoff
 

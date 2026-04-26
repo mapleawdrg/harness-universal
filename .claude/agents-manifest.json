@@ -1,6 +1,13 @@
 {
   "_comment": "SubagentStop output-guard가 읽는 에이전트→기대 산출물 매핑. 새 에이전트 추가 시 case 문 수정 대신 이 파일만 갱신.",
   "_handoff_convention": "{PHASE}는 호출 시 첫 줄 'Phase: P{N}' 로 주입. 파일명은 *-p{N}.md 패턴. PHASE-agnostic 에이전트는 phase_scoped=false.",
+  "_field_semantics": {
+    "expected_output": "subagent-output-guard.sh가 SubagentStop 시 .harness/{value} 존재 여부 검증.",
+    "phase_scoped": "expected_output에 {PHASE} 토큰 포함 여부.",
+    "role": "generator | evaluator | cross-cutting (문서화 메타 — hook 미사용).",
+    "next / next_on_pass / next_on_needs_work / routes_to": "에이전트 체인 그래프 (문서화 메타 — hook 미사용. 본문은 각 에이전트 .md의 Loop Termination + 에스컬레이션 섹션에 박힘).",
+    "escalate_after_n_failures": "문서화 메타 — hook 미사용. 실제 에스컬레이션 트리거는 dev.md Step 4a, qa.md Step 6a에 명시. (H2 후속 작업: hook이 이 필드를 읽어 자동 라우팅)"
+  },
 
   "agents": {
     "product-designer": {
