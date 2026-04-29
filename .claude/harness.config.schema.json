@@ -15,7 +15,7 @@
     },
     "actor_role": {
       "type": "string",
-      "description": "Primary user/actor role label injected into agent prompts (replaces generic 'user'). Examples: 'Owner', 'PM', 'Founder', 'Captain'."
+      "description": "Primary user/actor role label injected into agent prompts (replaces generic 'user'). Examples: 'Owner', 'PM', 'Founder', 'Lead', 'Maintainer'."
     },
     "roadmap_doc": {
       "type": ["string", "null"],
@@ -23,7 +23,7 @@
     },
     "scenario_id_pattern": {
       "type": ["string", "null"],
-      "description": "Pattern for scenario IDs in roadmap_doc (e.g. 'UC-1~UC-10', 'S1-S17'). null if not used."
+      "description": "Pattern for scenario IDs in roadmap_doc (e.g. 'UC-1~UC-10', 'JTBD-1~JTBD-9', 'TS-1~TS-20'). null if not used."
     },
 
     "drift_check_docs": {
