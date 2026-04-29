@@ -17,7 +17,7 @@ C4 모델 Level 1 Context(제품/비즈니스) 담당. Level 2-3 Container/Compo
 
 ## Startup Protocol
 
-> **PHASE 취득**: 호출자가 첫 줄에 `Phase: P{N}` 명시 (예: `P4-6`). 미지정 시 사용자에게 한 줄로 질문.
+> **Phase**: 호출자 첫 줄에 `Phase: P{N}`. 미지정 시 사용자에게 질문.
 
 0. `.claude/harness.config.json` (있으면) → `project_name`, `actor_role`, `domain_vocab`, `roadmap_doc` 세션 변수 고정. 산출물의 Actor 호칭·도메인 용어 자리에 주입.
 1. `.harness/product-vision.md` 존재 확인 (없으면 중단: "사용자(actor_role)에게 product-vision.md 최초 작성 요청 — Strategic, 1회만")

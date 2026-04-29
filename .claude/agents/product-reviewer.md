@@ -15,7 +15,7 @@ maxTurns: 20
 
 ## Startup Protocol
 
-> **PHASE 취득**: 호출자가 첫 줄에 `Phase: P{N}` 명시 (예: `P4.5`, `P5`, `P4-6`). 미지정 시 사용자에게 한 줄로 질문.
+> **Phase**: 호출자 첫 줄에 `Phase: P{N}`. 미지정 시 사용자에게 질문.
 > **치환 규칙**: `{PHASE}` = `P` 접두 제거 (예: `P4.5` → `4.5`). 경로 예: `product-review-p4.5.md`.
 
 0. `.claude/harness.config.json` (있으면) → `actor_role`, `domain_vocab`, `roadmap_doc` 세션 변수 고정. 검증 예시·용어에 주입.

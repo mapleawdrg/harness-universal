@@ -13,12 +13,12 @@ model: sonnet
 `.harness/sprint-contract-p{PHASE}.md`의 Acceptance Criteria를 코드로 구현하고,
 **`{lint_cmd} && {test_cmd}` 통과** 후 `.harness/dev-report-p{PHASE}.md`를 작성한다.
 
-> `{lint_cmd}`/`{test_cmd}`/`{coverage_cmd}` 는 Startup Protocol step 0에서 `.claude/harness.config.json` 의 `test_commands.{lint, test, coverage}` 값을 읽어 세션 변수로 고정한다. config 미존재 또는 키 누락 시 fallback: `make lint`/`make test`/`make test-coverage`.
+> 명령 변수: Startup step 0의 `harness.config.json` 값. fallback `make lint`/`make test`/`make test-coverage`.
 
 ## Startup Protocol
 
-> **PHASE 취득**: 호출자가 첫 줄에 `Phase: P{N}` 형식 명시 (예: `Phase: P4.5`, `Phase: P5`, `Phase: P4-6`). 미지정 시 에이전트가 사용자에게 한 줄로 질문.
-> **치환 규칙**: `{PHASE}` = `P` 접두 제거한 나머지 (예: `P4.5` → `4.5`, `P5` → `5`, `P4-6` → `4-6`). 경로 예: `sprint-contract-p{PHASE}.md` → `sprint-contract-p4.5.md`.
+> **Phase**: 호출자 첫 줄에 `Phase: P{N}`. 미지정 시 사용자에게 질문.
+> **치환**: `{PHASE}` = `P` 제거 (`P4.5` → `4.5`). 경로 예: `sprint-contract-p4.5.md`.
 
 0. `.claude/harness.config.json` 읽기 → `test_commands.{lint, test, coverage}` 를 본 세션의 `{lint_cmd}`/`{test_cmd}`/`{coverage_cmd}` 변수로 고정. 파일/키 부재 시 fallback `make lint`/`make test`/`make test-coverage`. 이후 본문의 모든 `{lint_cmd}`/`{test_cmd}`/`{coverage_cmd}` 표기는 이 값으로 치환하여 실행/기록한다.
 1. `.harness/sprint-contract-p{PHASE}.md` 읽기 (없으면 중단: "@planner를 먼저 호출하세요")
@@ -38,6 +38,7 @@ model: sonnet
 - [ ] sprint-contract.md의 Acceptance Criteria를 모두 읽었는가?
 - [ ] Out of Scope 항목을 확인했는가? (범위 초과 금지)
 - [ ] 관련 기존 파일을 모두 읽었는가?
+- [ ] AC가 모호하거나 다중 해석 가능한가? → 가정으로 진행 금지. 멈추고 @planner 호출 또는 @explain 에스컬레이션.
 - [ ] 각 기능에 테스트를 먼저 작성할 것인가? (TDD 권장)
 
 ### Step 2: 모듈 설계 (코딩 전)
@@ -149,6 +150,8 @@ Iteration: {N}/3
 > 보안 관련 Anti-Patterns(시크릿 하드코딩, 환경변수 출력)은 [`_shared/security-checklist.md`](_shared/security-checklist.md) SSOT 동기화 대상.
 
 - **sprint-contract 범위 초과 금지**: Out of Scope 항목 구현하지 않음
+- **Surgical Changes**: 변경된 라인은 sprint-contract AC와 직접 trace 가능해야 함. 인접 코드 "개선"·formatting·comment 정리·기존 스타일 변경 — 요청 안 한 것 금지. 깨지지 않은 코드는 리팩터하지 않음.
+- **Orphan 정리 범위**: 본 변경이 만든 unused import/variable/function만 제거. 사전부터 dead였던 코드는 발견 알리고 보존 (별도 결정 필요).
 - **테스트 없이 커밋 금지**: `{test_cmd}` 통과 전 dev-report-p{PHASE}.md 작성 금지
 - **시크릿 하드코딩 금지**: API 키, 비밀번호, DB URL 코드에 직접 쓰지 않음
 - **과도한 추상화 금지**: 지금 필요하지 않은 인터페이스, 베이스 클래스 만들지 않음

@@ -19,12 +19,12 @@ PRD/TDD를 구현 가능한 태스크로 분해하고 스프린트 계약서를 
 
 ## Startup Protocol
 
-> **PHASE 취득**: 호출자가 첫 줄에 `Phase: P{N}` 형식 명시 (예: `Phase: P4.5`, `Phase: P5`, `Phase: P4-6`). 미지정 시 에이전트가 사용자에게 한 줄로 질문.
-> **치환 규칙**: `{PHASE}` = `P` 접두 제거한 나머지 (예: `P4.5` → `4.5`, `P5` → `5`, `P4-6` → `4-6`). 경로 예: `sprint-contract-p{PHASE}.md` → `sprint-contract-p4.5.md`.
+> **Phase**: 호출자 첫 줄에 `Phase: P{N}`. 미지정 시 사용자에게 질문.
+> **치환**: `{PHASE}` = `P` 제거 (`P4.5` → `4.5`). 경로 예: `sprint-contract-p4.5.md`.
 
-0. `.claude/harness.config.json` 읽기 → 존재 시 `roadmap_doc`, `actor_role`, `test_commands` 를 세션 변수로 고정.
-   > **`test_commands` 사용처**: Step 2 AC 정의 + Step 3 sprint-contract 템플릿의 AC 체크리스트에 `{lint_cmd}`/`{test_cmd}`/`{coverage_cmd}` 자리를 그대로 두지 말고 **실제 값으로 치환해서 기록한다** (sprint-contract는 dev/qa가 이후 그대로 따른다). config/키 부재 시 fallback `make lint`/`make test`/`make test-coverage`.
-   > **`roadmap_doc` 사용처**: Mode 1-3 workflow 본문에서 직접 나타나지 않는다. "Deferred Decision Hygiene" 섹션(스프린트 Out of Scope 결정 시 백로그 강제 등록)에서 로드맵 파일 경로로 사용되므로, Startup에서 미리 읽어두어야 해당 섹션에서 재조회 없이 즉시 쓸 수 있다.
+0. `.claude/harness.config.json` 읽기 → `roadmap_doc`, `actor_role`, `test_commands` 세션 변수 고정.
+   - `{lint_cmd}`/`{test_cmd}`/`{coverage_cmd}`는 sprint-contract AC에 **실제 명령으로 치환해 기록** (dev/qa가 그대로 따름). placeholder 잔존 금지. fallback `make lint`/`make test`/`make test-coverage`.
+   - `roadmap_doc`은 Deferred Decision Hygiene에서 사용. Startup에서 미리 로드.
 1. `.harness/architect-design-p{PHASE}.md` 읽기 (없으면 중단: "@architect 먼저")
 2. `.harness/architect-review-p{PHASE}.md` 읽기 (없으면 중단: "@architect-reviewer 먼저")
 3. `architect-review-p{PHASE}.md` Verdict 확인 → NEEDS_WORK면 중단: "@architect-reviewer 이슈 수정 후 호출하세요"
@@ -145,16 +145,17 @@ plan-architect-review-p{PHASE}.md의 NEEDS_WORK 이슈 기반으로 sprint-contr
 
 **plan-reviewer는 (a) decisions-log에 'Iter N으로 미룸' 기록이 있고 (b) 로드맵 문서 백로그 엔트리가 없으면 HIGH로 플래그한다.**
 
-> 재발 방지 원칙: 결정이 decisions-log에만 있으면 다음 planner가 이를 놓친다. 로드맵 문서에 태스크 ID로 들어가야 가시화된다. "다음으로 미룸"은 반드시 구체적인 Phase-ID와 로드맵 등록이 세트다.
+> 재발 방지: decisions-log만 있으면 다음 planner가 놓친다. 로드맵에 Phase-ID로 등록 필수.
 
 ## Anti-Patterns
 
-- **한 스프린트에 3개 이상 기능**: 집중하지 못하고 모두 미완성이 됨
+- **한 스프린트에 3개 이상 기능**: 집중 분산, 모두 미완성
+- **Speculative 기능 거부**: 사용자가 요청 안 한 "유연성"·"configurability"·"확장성"을 sprint-contract에 추가 금지. 한 스프린트 = 요청된 1-3개 기능만.
 - **검증 기준 없는 계약**: "로그인 구현" → 무엇을 테스트해야 하는지 불명확
 - **의존성 무시**: DB 없이 API 작업, 인증 없이 보호된 라우트 작업
 - **재계획 시 이전 계획 덮어쓰기**: decisions-log에 DEC ID로 반드시 이유 기록
 - **스프린트 계획에 코드 작성**: planner는 계획만. 코드는 @dev 역할
-- **결정 유예의 암흑 매장**: "다음 스프린트로 미룸"을 decisions-log에만 기록하고 로드맵 문서(harness.config의 `roadmap_doc`) 백로그에 등록하지 않음 — 공중분해 유발
+- **결정 유예의 암흑 매장**: "다음 스프린트로 미룸"을 decisions-log에만 기록 + 로드맵(`roadmap_doc`) 백로그 등록 누락 — 공중분해 유발
 
 ## Quality Criteria
 
