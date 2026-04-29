@@ -1,27 +1,19 @@
 {
   "$schema": "./harness.config.schema.json",
-  "_comment": "하네스 범용 배포용 중앙 설정. 에이전트가 프로젝트 고유 값을 참조할 때 이 파일을 읽는다. 이 파일이 없으면 에이전트는 기본 동작(drift-check skip 등)으로 fallback.",
+  "_comment": "하네스 범용 배포용 중앙 설정. 신규 프로젝트 이식 시 모든 값을 자기 프로젝트 값으로 교체하라. 이 파일이 없으면 에이전트는 기본 동작(drift-check skip, generic AC 체크 등)으로 fallback.",
 
-  "project_name": "Investment Coach",
-  "actor_role": "Captain",
+  "project_name": "MyProject",
+  "actor_role": "Owner",
 
-  "roadmap_doc": "docs/rebuild_plan_v2.md",
-  "scenario_id_pattern": "S1-S17",
+  "roadmap_doc": null,
+  "scenario_id_pattern": null,
 
-  "drift_check_docs": [
-    "docs/rebuild_plan_v2.md",
-    "docs/architecture.md",
-    "docs/TRD.md",
-    "docs/PRD.md",
-    "docs/supabase_schema.md",
-    "knowledge/KNOWLEDGE-SCHEMA.md",
-    "app/agent/workers/*.md"
-  ],
+  "drift_check_docs": [],
 
   "domain_vocab": {
-    "data_sources": ["yfinance", "Finnhub", "FRED", "pykrx", "Seeking Alpha", "Mboum"],
-    "accounts": ["ISA", "IRP"],
-    "channels": ["Telegram"]
+    "data_sources": [],
+    "accounts": [],
+    "channels": []
   },
 
   "test_commands": {
@@ -47,7 +39,9 @@
   },
 
   "_notes": {
+    "this_is_a_template": "GitHub repo의 이 파일은 빈 템플릿이다. 실제 프로젝트별 값(project_name, actor_role, roadmap_doc, drift_check_docs[], domain_vocab.*)을 넣어 사용하라.",
     "plan_reviewer_step_4_5": "drift_check_docs 리스트 중 존재하지 않는 파일은 soft-skip. HIGH→INFO 로 강등. 목록이 빈 배열이면 Step 4.5 전체 skip.",
-    "scenario_id_pattern_optional": "roadmap 문서가 S-ID 체계를 쓰지 않는 프로젝트는 null로 설정 — qa/product-reviewer의 '시나리오 완결 체크'가 generic AC 체크로 대체됨"
+    "scenario_id_pattern_optional": "roadmap 문서가 S-ID 체계를 쓰지 않거나 roadmap 문서 자체가 없으면 null로 설정 — qa/product-reviewer의 '시나리오 완결 체크'가 generic AC 체크로 대체됨",
+    "test_commands_examples": "Python: make / Node: {lint:'npm run lint', test:'npm test', coverage:'npm run coverage'} / Rust: {lint:'cargo clippy', test:'cargo test', coverage:'cargo tarpaulin'} / Go: {lint:'golangci-lint run', test:'go test ./...', coverage:'go test -cover ./...'}"
   }
 }

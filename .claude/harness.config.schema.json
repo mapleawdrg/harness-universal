@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "harness-universal config",
+  "description": "Project-specific values for the 9-agent harness. See README_HARNESS.md §2.",
+  "type": "object",
+  "required": ["project_name", "actor_role", "test_commands"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_comment": { "type": "string" },
+    "_notes": { "type": "object" },
+
+    "project_name": {
+      "type": "string",
+      "description": "Display name of the project. Used in agent outputs and summaries."
+    },
+    "actor_role": {
+      "type": "string",
+      "description": "Primary user/actor role label injected into agent prompts (replaces generic 'user'). Examples: 'Owner', 'PM', 'Founder', 'Captain'."
+    },
+    "roadmap_doc": {
+      "type": ["string", "null"],
+      "description": "Path to roadmap/PRD/scenario document used by qa Step 4.5 and planner Deferred Decision Hygiene. null if no roadmap doc."
+    },
+    "scenario_id_pattern": {
+      "type": ["string", "null"],
+      "description": "Pattern for scenario IDs in roadmap_doc (e.g. 'UC-1~UC-10', 'S1-S17'). null if not used."
+    },
+
+    "drift_check_docs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths plan-reviewer Step 4.5 cross-checks for silent conflicts. Empty array = skip Step 4.5 entirely. Non-existent files soft-skip with INFO note."
+    },
+
+    "domain_vocab": {
+      "type": "object",
+      "description": "Domain-specific terminology for product-designer/reviewer to reference when validating data sources / accounts / channels.",
+      "properties": {
+        "data_sources": { "type": "array", "items": { "type": "string" } },
+        "accounts": { "type": "array", "items": { "type": "string" } },
+        "channels": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "test_commands": {
+      "type": "object",
+      "required": ["lint", "test", "coverage"],
+      "description": "Shell commands dev/qa execute and planner injects into sprint-contract AC.",
+      "properties": {
+        "lint": { "type": "string" },
+        "test": { "type": "string" },
+        "coverage": { "type": "string" },
+        "ci": { "type": "string" }
+      }
+    },
+
+    "coverage_targets": {
+      "type": "object",
+      "description": "plan-reviewer Step 3 reference values. Module names are project-specific.",
+      "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 100 }
+    },
+
+    "loop_limits": {
+      "type": "object",
+      "description": "Iteration caps per generator-evaluator pair. All defaults to 3.",
+      "properties": {
+        "architect_reviewer": { "type": "integer", "minimum": 1 },
+        "plan_reviewer": { "type": "integer", "minimum": 1 },
+        "dev_qa": { "type": "integer", "minimum": 1 },
+        "product_reviewer": { "type": "integer", "minimum": 1 },
+        "explain_max_turns": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "additionalProperties": false
+}
