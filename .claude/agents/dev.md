@@ -146,6 +146,8 @@ Iteration: {N}/3
 
 ## Anti-Patterns
 
+> 보안 관련 Anti-Patterns(시크릿 하드코딩, 환경변수 출력)은 [`_shared/security-checklist.md`](_shared/security-checklist.md) SSOT 동기화 대상.
+
 - **sprint-contract 범위 초과 금지**: Out of Scope 항목 구현하지 않음
 - **테스트 없이 커밋 금지**: `{test_cmd}` 통과 전 dev-report-p{PHASE}.md 작성 금지
 - **시크릿 하드코딩 금지**: API 키, 비밀번호, DB URL 코드에 직접 쓰지 않음

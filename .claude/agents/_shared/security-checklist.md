@@ -66,7 +66,10 @@
 1. 본 문서의 항목을 먼저 갱신한다.
 2. 영향받는 에이전트(들)의 본문을 grep으로 찾아 동시에 갱신한다:
    ```bash
-   grep -n "시크릿\|환경변수\|입력 검증\|더미값" .claude/agents/{dev,qa,architect-reviewer}.md
+   # SSOT 키워드 + architect-reviewer의 도메인 표현(민감 데이터/외부 입력)을 함께 매칭
+   grep -nE "시크릿|환경변수|입력 검증|더미값|민감 데이터|외부 입력|보안 규칙|보안 검토|보안 설계" .claude/agents/{dev,qa,architect-reviewer}.md
+   # dev.md Anti-Patterns 섹션도 별도 확인 (보안 항목 2줄 박혀있음)
+   grep -nA1 "Anti-Patterns" .claude/agents/dev.md
    ```
 3. plan-reviewer Step 4.5의 `drift_check_docs[]` 에 본 파일을 포함시키면 sprint-contract가 보안 정책을 변경할 때 침묵 충돌이 자동 탐지된다 (선택, 프로젝트별 결정).
 
