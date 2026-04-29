@@ -55,7 +55,8 @@ jobs:
         run: |
           # 공개 repo가 stock_project 어휘를 다시 흡수하는 것을 차단.
           # README의 grep 예시 라인은 의도적이므로 .claude/agents/ + .claude/hooks/ + config만 검사.
-          if grep -rnE "Investment Coach|Captain|rebuild_plan_v2|S1-S17|KIS API|Telegram|Finnhub|ISA|IRP|trade_log|analyst_facts|올랜도킴|supabase_schema" \
+          # 짧은 약어(ISA, IRP)는 word boundary 적용 — 안 그러면 'D[ISA]BLED'에 false-positive.
+          if grep -rnE "(Investment Coach|\bCaptain\b|rebuild_plan_v2|\bS1-S17\b|\bKIS API|\bTelegram\b|\bFinnhub\b|\bISA\b|\bIRP\b|\btrade_log\b|\banalyst_facts\b|올랜도킴|supabase_schema)" \
                .claude/agents/ \
                .claude/hooks/ \
                .claude/harness.config.json \
