@@ -1,0 +1,186 @@
+name: smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bash syntax check (all hooks)
+        run: |
+          set -e
+          fail=0
+          for f in .claude/hooks/*.sh .claude/hooks/rules/*.sh; do
+            if ! bash -n "$f"; then
+              echo "::error file=$f::syntax error"
+              fail=1
+            fi
+          done
+          [ $fail -eq 0 ] && echo "✅ all .sh files pass bash -n"
+          exit $fail
+
+      - name: JSON validity (config + manifest + schema)
+        run: |
+          set -e
+          for f in .claude/harness.config.json .claude/agents-manifest.json .claude/harness.config.schema.json; do
+            python3 -c "import json; json.load(open('$f'))" \
+              && echo "✅ $f" \
+              || { echo "::error file=$f::invalid JSON"; exit 1; }
+          done
+
+      - name: harness.config.json schema validation
+        run: |
+          pip install -q jsonschema
+          python3 - <<'PY'
+          import json
+          from jsonschema import Draft7Validator
+          schema = json.load(open('.claude/harness.config.schema.json'))
+          config = json.load(open('.claude/harness.config.json'))
+          v = Draft7Validator(schema)
+          errors = list(v.iter_errors(config))
+          if errors:
+              for e in errors:
+                  print(f"::error::{e.message} at {list(e.path)}")
+              raise SystemExit(1)
+          print("✅ harness.config.json conforms to schema")
+          PY
+
+      - name: Domain leak guard (no project-specific terms)
+        run: |
+          # 공개 repo가 stock_project 어휘를 다시 흡수하는 것을 차단.
+          # README의 grep 예시 라인은 의도적이므로 .claude/agents/ + .claude/hooks/ + config만 검사.
+          if grep -rnE "Investment Coach|Captain|rebuild_plan_v2|S1-S17|KIS API|Telegram|Finnhub|ISA|IRP|trade_log|analyst_facts|올랜도킴|supabase_schema" \
+               .claude/agents/ \
+               .claude/hooks/ \
+               .claude/harness.config.json \
+               .claude/agents-manifest.json \
+               .claude/harness.config.schema.json; then
+            echo "::error::Domain-specific terms leaked into harness core. Reset to template values."
+            exit 1
+          fi
+          echo "✅ no domain leak in harness core"
+
+      - name: Hook smoke test — session-summary
+        run: |
+          set -e
+          mkdir -p /tmp/h_smoke/.harness
+          touch /tmp/h_smoke/.harness/sprint-contract-p1.md
+          touch /tmp/h_smoke/.harness/dev-report-p1.md
+          touch /tmp/h_smoke/.harness/decisions-log.md
+          OUT=$(HARNESS_DIR_OVERRIDE=/tmp/h_smoke/.harness \
+                HARNESS_MANIFEST_OVERRIDE=$(pwd)/.claude/agents-manifest.json \
+                bash .claude/hooks/session-summary.sh)
+          echo "$OUT"
+          # 기대: 적어도 1개의 [존재] 라인이 출력되어야 한다 (manifest 파싱 검증).
+          if ! echo "$OUT" | grep -q "\[존재\] planner"; then
+            echo "::error::session-summary failed to detect sprint-contract-p1.md"
+            exit 1
+          fi
+          echo "✅ session-summary detects phase-scoped artifacts"
+
+      - name: Hook smoke test — subagent-output-guard (PHASE extraction)
+        run: |
+          set -e
+          mkdir -p /tmp/h_smoke2/.harness
+          touch /tmp/h_smoke2/.harness/sprint-contract-p7.md
+
+          # transcript JSONL with 'Phase: P7' in first user message
+          TMP_TRANS=$(mktemp)
+          echo '{"type":"user","message":{"content":"Phase: P7\nplan the next sprint"}}' > "$TMP_TRANS"
+
+          # 정상 케이스: PHASE 추출 → 산출물 존재 → 무경고
+          OUT=$( cat <<EOF | HARNESS_DIR_OVERRIDE=/tmp/h_smoke2/.harness \
+                              HARNESS_MANIFEST_OVERRIDE=$(pwd)/.claude/agents-manifest.json \
+                              bash .claude/hooks/subagent-output-guard.sh 2>&1
+          {"hook_event_name":"SubagentStop","agent_type":"planner","agent_id":"x","agent_transcript_path":"$TMP_TRANS","last_assistant_message":"done"}
+          EOF
+          )
+          if [ -n "$OUT" ]; then
+            echo "::error::subagent-output-guard emitted unexpected output for valid case:"
+            echo "$OUT"
+            exit 1
+          fi
+          echo "✅ subagent-output-guard: valid case silent"
+
+          # PHASE 누락 케이스: 경고 출력 expected
+          TMP_TRANS2=$(mktemp)
+          echo '{"type":"user","message":{"content":"no phase header"}}' > "$TMP_TRANS2"
+          OUT=$( cat <<EOF | HARNESS_DIR_OVERRIDE=/tmp/h_smoke2/.harness \
+                              HARNESS_MANIFEST_OVERRIDE=$(pwd)/.claude/agents-manifest.json \
+                              bash .claude/hooks/subagent-output-guard.sh 2>&1
+          {"hook_event_name":"SubagentStop","agent_type":"planner","agent_id":"x","agent_transcript_path":"$TMP_TRANS2","last_assistant_message":"done"}
+          EOF
+          )
+          if ! echo "$OUT" | grep -q "PHASE 메타데이터를 추출하지 못했습니다"; then
+            echo "::error::subagent-output-guard failed to warn on missing PHASE"
+            echo "got: $OUT"
+            exit 1
+          fi
+          echo "✅ subagent-output-guard: missing PHASE produces warning"
+
+      - name: Manifest ↔ session-summary key parity
+        run: |
+          # session-summary의 fallback 케이스 statement가 manifest의 agent 키와 일치하는지
+          MANIFEST_AGENTS=$(python3 -c "import json; print(' '.join(sorted(json.load(open('.claude/agents-manifest.json'))['agents'].keys())))")
+          MISSING=""
+          for a in $MANIFEST_AGENTS; do
+            if ! grep -q "\"$a|" .claude/hooks/session-summary.sh; then
+              MISSING="$MISSING $a"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::warning::session-summary fallback missing agents:$MISSING (manifest is the canonical source — fallback only used when manifest absent)"
+          else
+            echo "✅ session-summary fallback matches manifest agent keys"
+          fi
+
+      - name: Verify expected file inventory
+        run: |
+          # 핵심 파일이 모두 존재하는지 — 누락 시 이식자가 막힘
+          required=(
+            ".claude/harness.config.json"
+            ".claude/harness.config.schema.json"
+            ".claude/agents-manifest.json"
+            ".claude/README_HARNESS.md"
+            ".claude/settings.json"
+            ".claude/agents/_shared/security-checklist.md"
+            ".claude/hooks/sandbox-guard.sh"
+            ".claude/hooks/subagent-output-guard.sh"
+            ".claude/hooks/session-summary.sh"
+            "README.md"
+            ".gitignore"
+          )
+          fail=0
+          for f in "${required[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error file=$f::required file missing"
+              fail=1
+            fi
+          done
+          [ $fail -eq 0 ] && echo "✅ all required files present"
+          exit $fail
+
+      - name: Verify all 9 agents present
+        run: |
+          required_agents=(
+            architect architect-reviewer
+            product-designer product-reviewer
+            planner plan-reviewer
+            dev qa
+            explain
+          )
+          fail=0
+          for a in "${required_agents[@]}"; do
+            if [ ! -f ".claude/agents/$a.md" ]; then
+              echo "::error::agent file missing: .claude/agents/$a.md"
+              fail=1
+            fi
+          done
+          [ $fail -eq 0 ] && echo "✅ all 9 agents present"
+          exit $fail

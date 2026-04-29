@@ -58,29 +58,19 @@ mkdir -p .harness
 
 **`drift_check_docs[]`가 빈 배열이면** plan-reviewer Step 4.5 전체 skip.
 
-### 3. 에이전트 도메인 누출 치환 ← **§2 설정만으로는 끝이 아님 — 이 단계 필수**
+### 3. 에이전트 도메인 누출 점검 (선택)
 
-> ⚠️ **v1 한계**: `harness.config.json`의 값은 에이전트가 실행 시 읽어 "참고"하지만, 에이전트 파일 내부에 하드코딩된 stock_project 고유 문자열은 **자동 치환되지 않는다**. 아래 파일들을 직접 편집해야 한다. (차기 릴리스에서 Jinja2/`{{KEY}}` 프리프로세서 템플릿화 예정)
+본 repo의 `.claude/agents/*.md` 와 hooks/config 파일들은 **프로젝트-애그노스틱 상태로 유지**된다 (CI smoke test가 도메인 어휘 잔존 0건을 강제).
 
-현재 6개 에이전트 파일에 stock_project 고유 문자열이 남아있음. 신규 프로젝트 이식 시 아래 grep으로 찾아 프로젝트 용어로 교체:
+이식 후 자기 프로젝트에서 작업하다 보면 에이전트 본문에 자기 도메인 어휘를 박는 경우가 생긴다. 이는 그 프로젝트 내에서는 OK이지만, 추후 본 universal harness로 PR 백포팅 시 차단된다. 자기 프로젝트가 본 repo로 회귀할 일 없다면 무시.
 
+**자기 프로젝트의 어휘 잔존 점검** (선택):
 ```bash
-grep -rn "Investment Coach\|Captain\|rebuild_plan_v2\|S1-S17\|KIS\|Telegram\|Finnhub\|ISA\|IRP\|trade_log\|analyst_facts\|YouTube\|올랜도킴" .claude/agents/
+# 자기 프로젝트의 고유 어휘를 패턴에 넣어 grep
+grep -rnE "MyProject|MyActor|my_roadmap.md" .claude/agents/
 ```
 
-해당 파일:
-- `.claude/agents/qa.md` — Step 4.5 (Scenario 완결 AC 체크)
-- `.claude/agents/product-designer.md` — 데이터 매핑 예시
-- `.claude/agents/product-reviewer.md` — Step 2 missing-scenario 패턴 매트릭스
-- `.claude/agents/planner.md` — Mode 판정 예시
-- `.claude/agents/plan-reviewer.md` — Step 4.5 drift-check 예시 (harness.config 참조로 대체 권장)
-- `.claude/agents/architect.md` — 모듈 breakdown 예시
-
-**치환 원칙**: 
-- "Captain" → `{actor_role}`
-- "rebuild_plan_v2.md" → `{roadmap_doc}`
-- "S1-S17" → `{scenario_id_pattern}`
-- 도메인 용어(KIS/Finnhub 등) → 프로젝트별 데이터 소스 용어
+**v0.2 자동 치환 도구** — `.claude/scripts/init-project.sh` 가 `harness.config.json` 값을 읽어 에이전트 파일의 placeholder(`{actor_role}`, `{roadmap_doc}` 등)를 자동 치환하도록 예정.
 
 ### 4. `.claude/settings.json` 확인
 

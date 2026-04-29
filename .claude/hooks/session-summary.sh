@@ -91,6 +91,57 @@ if [ -f "${HARNESS_DIR}/changed-files.log" ]; then
     echo "이번 세션 변경 파일: ${COUNT}개"
 fi
 
+# Transparency: 매니페스트 + 가장 최근 산출물 mtime 으로 다음 추천 에이전트 추정
+if [ -f "$MANIFEST" ]; then
+    HINT="$(MANIFEST_PATH="$MANIFEST" HARNESS_DIR_HINT="$HARNESS_DIR" python3 -u - <<'PY' 2>/dev/null || true
+import json, os, glob
+manifest_path = os.environ["MANIFEST_PATH"]
+harness = os.environ["HARNESS_DIR_HINT"]
+with open(manifest_path) as f:
+    data = json.load(f)
+agents = data.get("agents", {})
+
+# 각 에이전트의 가장 최근 산출물 mtime 매핑
+latest = {}  # agent_name -> (mtime, file)
+for name, spec in agents.items():
+    out = spec.get("expected_output", "")
+    pattern = out.replace("{PHASE}", "*") if "{PHASE}" in out else out
+    if not pattern:
+        continue
+    paths = glob.glob(os.path.join(harness, pattern))
+    if not paths:
+        continue
+    paths.sort(key=os.path.getmtime, reverse=True)
+    latest[name] = (os.path.getmtime(paths[0]), os.path.basename(paths[0]))
+
+if not latest:
+    print("INIT|@product-designer 또는 @architect — 첫 사이클 시작")
+    raise SystemExit(0)
+
+# 가장 최근 활동한 에이전트
+last_agent = max(latest.items(), key=lambda kv: kv[1][0])[0]
+last_file = latest[last_agent][1]
+
+# 다음 추천: manifest의 next/next_on_pass 사용
+spec = agents[last_agent]
+next_hint = spec.get("next") or spec.get("next_on_pass") or "(complete or user judgment)"
+
+print(f"FLOW|마지막 활동: @{last_agent} → {last_file}")
+print(f"NEXT|다음 추천: @{next_hint}  (manifest 기반 — verdict가 PASS 인 경우)")
+PY
+)"
+    if [ -n "$HINT" ]; then
+        echo ""
+        echo "$HINT" | while IFS='|' read -r KIND TEXT; do
+            case "$KIND" in
+                INIT) echo "  → $TEXT" ;;
+                FLOW) echo "  · $TEXT" ;;
+                NEXT) echo "  → $TEXT" ;;
+            esac
+        done
+    fi
+fi
+
 # .turn-files 리셋
 TURN_FILES="${HARNESS_DIR}/.turn-files"
 [ -f "$TURN_FILES" ] && : > "$TURN_FILES"
