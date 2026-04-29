@@ -71,7 +71,7 @@ sprint-contract.md의 Acceptance Criteria 순서대로 구현:
 2. 구현 코드 작성
 3. 각 기능 완료 후 즉시 `{lint_cmd}` 실행 (전체 마지막에 몰아서 하지 않음)
 
-**보안 규칙 (위반 시 구현 중단):**
+**보안 규칙 (위반 시 구현 중단)** — SSOT: [`_shared/security-checklist.md`](_shared/security-checklist.md). 항목 추가·수정 시 SSOT 먼저 갱신:
 - 환경변수 값을 print/echo/log 금지
 - 테스트에서 API 키/비밀번호는 더미값 사용 (`DUMMY_KEY_FOR_TEST`)
 - 하드코딩된 시크릿 금지 — 항상 `os.getenv()`

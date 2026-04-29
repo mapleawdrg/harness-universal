@@ -118,7 +118,7 @@ sprint-contract의 AC가 "구현 사실"(함수 존재, DB INSERT, 모듈 주입
 - [ ] 각 모듈이 하나의 책임만 갖는가? (여러 역할을 하는 파일 없는가)
 - [ ] 모듈 간 불필요한 의존성이 없는가?
 
-**보안 검토:**
+**보안 검토** — SSOT: [`_shared/security-checklist.md`](_shared/security-checklist.md). 항목 추가·수정 시 SSOT 먼저 갱신:
 - [ ] 하드코딩된 시크릿 없음 (API 키, 비밀번호, DB URL)
 - [ ] 사용자 입력 검증 존재 (sql injection, 경로 탐색 등)
 - [ ] 환경변수 값을 출력/로깅하지 않음
